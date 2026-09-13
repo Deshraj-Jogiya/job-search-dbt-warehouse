@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  dbt-build-and-test:
+    runs-on: ubuntu-latest
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_HTTP_PATH: ${{ secrets.DATABRICKS_HTTP_PATH }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      DBT_SCHEMA: job_search_dbt_ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Seed the raw tables into the real Databricks warehouse
+        run: dbt seed --profiles-dir . --full-refresh
+      - name: Run the dimensional models against the real warehouse
+        run: dbt run --profiles-dir .
+      - name: Run the real dbt tests (uniqueness, not-null, referential integrity)
+        run: dbt test --profiles-dir .

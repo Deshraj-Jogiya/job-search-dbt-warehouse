@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: dim_company
+    columns:
+      - name: company_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_job_posting
+    columns:
+      - name: posting_id
+        data_tests:
+          - unique
+          - not_null
+      - name: company_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_company')
+              field: company_id
+
+  - name: fct_application
+    columns:
+      - name: application_id
+        data_tests:
+          - unique
+          - not_null
+      - name: posting_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_job_posting')
+              field: posting_id
+      - name: status
+        data_tests:
+          - accepted_values:
+              values: ["applied", "screening", "interviewing", "offer", "rejected", "withdrawn"]
+
+  - name: fct_interview_event
+    columns:
+      - name: event_id
+        data_tests:
+          - unique
+          - not_null
+      - name: application_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('fct_application')
+              field: application_id

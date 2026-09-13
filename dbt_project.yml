@@ -1,0 +1,23 @@
+name: "job_search_dbt_warehouse"
+version: "1.0.0"
+config-version: 2
+
+profile: "job_search_dbt_warehouse"
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  job_search_dbt_warehouse:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
+
+seeds:
+  job_search_dbt_warehouse:
+    +schema: seed_data
+    raw_applications:
+      +column_types:
+        decision_date: string
