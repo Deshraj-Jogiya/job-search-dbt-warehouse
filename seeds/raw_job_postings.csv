@@ -1,0 +1,16 @@
+posting_id,company_id,job_title,seniority,posted_date,source
+101,1,Data Engineer,Mid,2026-06-01,greenhouse
+102,1,Senior Data Engineer,Senior,2026-06-15,greenhouse
+103,3,Platform Engineer,Mid,2026-06-03,lever
+104,3,Data Platform Lead,Senior,2026-06-20,lever
+105,5,Robotics Software Engineer,Mid,2026-06-10,workable
+106,6,Quantitative Analyst,Mid,2026-06-12,greenhouse
+107,6,Risk Data Engineer,Senior,2026-07-01,greenhouse
+108,8,Bioinformatics Engineer,Mid,2026-06-18,lever
+109,10,Manufacturing Data Analyst,Junior,2026-06-25,smartrecruiters
+110,2,BI Analyst,Mid,2026-06-05,greenhouse
+111,4,Healthcare Data Engineer,Mid,2026-07-05,workable
+112,7,Backend Engineer,Junior,2026-06-08,lever
+113,9,Logistics Analyst,Mid,2026-07-10,greenhouse
+114,1,ML Platform Engineer,Senior,2026-07-15,greenhouse
+115,3,Site Reliability Engineer,Mid,2026-07-18,lever

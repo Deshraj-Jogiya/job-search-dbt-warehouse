@@ -1,0 +1,15 @@
+event_id,application_id,round_name,scheduled_date,outcome
+1,1002,Phone Screen,2026-06-19,rejected
+2,1003,Phone Screen,2026-06-08,advanced
+3,1003,Technical,2026-06-16,advanced
+4,1003,Onsite,2026-06-24,advanced
+5,1004,Phone Screen,2026-06-25,advanced
+6,1004,Technical,2026-07-03,advanced
+7,1005,Phone Screen,2026-06-15,rejected
+8,1008,Technical,2026-06-24,rejected
+9,1010,Phone Screen,2026-06-10,rejected
+10,1011,Phone Screen,2026-07-12,advanced
+11,1012,Phone Screen,2026-06-13,advanced
+12,1012,Technical,2026-06-20,advanced
+13,1012,Onsite,2026-06-27,advanced
+14,1017,Phone Screen,2026-06-09,rejected

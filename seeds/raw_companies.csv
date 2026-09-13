@@ -1,0 +1,11 @@
+company_id,company_name,industry,size_band,sponsors_h1b
+1,Acme Analytics,Software,Mid,true
+2,Northwind Foods,Consumer,Large,false
+3,Contoso Cloud,Software,Large,true
+4,BlueRiver Health,Healthcare,Mid,false
+5,Fabrikam Robotics,Manufacturing,Mid,true
+6,Globex Financial,Finance,Large,true
+7,Initech Systems,Software,Small,false
+8,Umbrella Biotech,Healthcare,Large,true
+9,Wonka Logistics,Logistics,Mid,false
+10,Stark Materials,Manufacturing,Large,true
