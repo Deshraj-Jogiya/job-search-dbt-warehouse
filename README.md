@@ -24,20 +24,32 @@ stg_companies   stg_job_postings   stg_applications   stg_interview_events (view
               dim_job_posting   <--------+                   |
                                          |                   |
                                   fct_application  <----------+
-                                         |
-                                  fct_interview_event
+                                    |         |
+                                    |    fct_interview_event
+                                    |
+                     dim_date  ->  fct_daily_pipeline_snapshot  (incremental)
 ```
 
-- `dim_company`, `dim_job_posting` -- dimension tables.
+- `dim_company`, `dim_job_posting`, `dim_date` -- dimension tables. `dim_date` is a real
+  date spine (2025-01-01 through 2027-12-31) built natively in Databricks SQL
+  (`sequence()` + `explode()`, no external dbt package needed).
 - `fct_application` -- one row per application: joined back to its posting/company,
   `days_to_decision` (a real `datediff`), `interview_round_count`, and `reached_interview`
   / `is_closed` flags.
 - `fct_interview_event` -- one row per interview round, with `round_sequence` computed via
   a `row_number()` window function partitioned by application.
+- `fct_daily_pipeline_snapshot` -- **a real incremental model**, one row per calendar day
+  showing the cumulative shape of the whole pipeline as of that day (applied/closed/open/
+  offer/rejected counts). Materialized `incremental` with `unique_key='date_day'` and
+  `incremental_strategy='merge'`: a fresh build computes every day up to today, but a later
+  run only recomputes and merges in days after the latest already-loaded `date_day`, rather
+  than rescanning the full application history on every run.
 
 Tests (`models/marts/schema.yml`): `unique` + `not_null` on every primary key,
 `relationships` foreign-key tests between facts and dimensions, and an `accepted_values`
-test on application status.
+test on application status. Two real singular tests (`tests/*.sql`) check business rules
+a generic schema test can't express: a decision date can never be before the applied date,
+and the daily snapshot's derived counts can never go negative.
 
 ## Running it
 
