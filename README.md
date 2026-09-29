@@ -1,78 +1,59 @@
 # Job Search dbt Warehouse
 
-A small dbt project that builds a dimensional model on top of a Databricks SQL warehouse
-(Databricks Free Edition) -- staging views over raw seed data, then dimension and fact
-tables with real joins, a window function, and dbt's built-in data tests.
+[![ci](https://github.com/Deshraj-Jogiya/job-search-dbt-warehouse/actions/workflows/ci.yml/badge.svg)](https://github.com/Deshraj-Jogiya/job-search-dbt-warehouse/actions/workflows/ci.yml) ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 
-## Data
+A dbt project that builds a dimensional model on a live Databricks SQL warehouse: staging views over seed data, then dimension and fact
+tables, an incremental daily snapshot, and data tests that run against the warehouse in CI.
 
-The four `seeds/raw_*.csv` files are **synthetic sample data** in the job-search domain
-(companies, postings, applications, interview rounds) -- not a real company's data. This
-project exists to demonstrate the transformation pipeline (dbt seed -> staging -> marts ->
-tests) against a real warehouse, not to model this author's actual job search (that data
-lives in the separate Career Pilot CRM).
+## Highlights
+
+- **Dimensional model:** `dim_company`, `dim_job_posting` and `dim_date` (a 2025–2027 date spine built with `sequence()` + `explode()`),
+  plus `fct_application`, `fct_interview_event` and `fct_daily_pipeline_snapshot`.
+- **Measures:** a `datediff` days-to-decision measure, and a `row_number()` window function for interview-round sequencing.
+- **Incremental model:** the daily snapshot uses `merge` on `date_day`, so later runs only recompute new days.
+- **15 dbt tests:** uniqueness, not-null, referential integrity and accepted values, plus two singular business-rule tests (a decision
+  date never precedes the applied date; snapshot counts never go negative).
+- **Verified against the warehouse:** CI runs `dbt seed`, `dbt run` and `dbt test` on every push into a separate CI schema.
 
 ## Model
 
+```mermaid
+flowchart LR
+    subgraph seeds
+        rc[raw_companies] ; rp[raw_job_postings] ; ra[raw_applications] ; ri[raw_interview_events]
+    end
+    rc --> sc[stg_companies] --> dc[dim_company]
+    rp --> sp[stg_job_postings] --> dp[dim_job_posting]
+    dc --> dp
+    ra --> sa[stg_applications] --> fa[fct_application]
+    dp --> fa
+    ri --> si[stg_interview_events] --> fi[fct_interview_event]
+    fa --> fi
+    dd[dim_date] --> fs[fct_daily_pipeline_snapshot<br/>incremental merge]
+    fa --> fs
 ```
-raw_companies  raw_job_postings  raw_applications  raw_interview_events   (dbt seed)
-      |               |                  |                   |
-stg_companies   stg_job_postings   stg_applications   stg_interview_events (views)
-      |               |                  |                   |
-      +-------> dim_company             |                   |
-                      |                  |                   |
-              dim_job_posting   <--------+                   |
-                                         |                   |
-                                  fct_application  <----------+
-                                    |         |
-                                    |    fct_interview_event
-                                    |
-                     dim_date  ->  fct_daily_pipeline_snapshot  (incremental)
-```
 
-- `dim_company`, `dim_job_posting`, `dim_date` -- dimension tables. `dim_date` is a real
-  date spine (2025-01-01 through 2027-12-31) built natively in Databricks SQL
-  (`sequence()` + `explode()`, no external dbt package needed).
-- `fct_application` -- one row per application: joined back to its posting/company,
-  `days_to_decision` (a real `datediff`), `interview_round_count`, and `reached_interview`
-  / `is_closed` flags.
-- `fct_interview_event` -- one row per interview round, with `round_sequence` computed via
-  a `row_number()` window function partitioned by application.
-- `fct_daily_pipeline_snapshot` -- **a real incremental model**, one row per calendar day
-  showing the cumulative shape of the whole pipeline as of that day (applied/closed/open/
-  offer/rejected counts). Materialized `incremental` with `unique_key='date_day'` and
-  `incremental_strategy='merge'`: a fresh build computes every day up to today, but a later
-  run only recomputes and merges in days after the latest already-loaded `date_day`, rather
-  than rescanning the full application history on every run.
+## Stack
 
-Tests (`models/marts/schema.yml`): `unique` + `not_null` on every primary key,
-`relationships` foreign-key tests between facts and dimensions, and an `accepted_values`
-test on application status. Two real singular tests (`tests/*.sql`) check business rules
-a generic schema test can't express: a decision date can never be before the applied date,
-and the daily snapshot's derived counts can never go negative.
+dbt, Databricks SQL, SQL, dimensional modeling, GitHub Actions.
 
-## Running it
+## Run it
 
-Requires a Databricks SQL warehouse and a personal access token.
+Needs a Databricks SQL warehouse and a personal access token.
 
 ```bash
 pip install -r requirements.txt
-
-export DATABRICKS_HOST=<your-workspace-hostname>
-export DATABRICKS_HTTP_PATH=<your-warehouse-http-path>
-export DATABRICKS_TOKEN=<your-personal-access-token>
+export DATABRICKS_HOST=<workspace-hostname>
+export DATABRICKS_HTTP_PATH=<warehouse-http-path>
+export DATABRICKS_TOKEN=<personal-access-token>
 
 dbt seed --profiles-dir .
-dbt run --profiles-dir .
+dbt run  --profiles-dir .
 dbt test --profiles-dir .
 ```
 
-`profiles.yml` reads all three values from the environment (`env_var(...)`) -- nothing
-sensitive is committed to this repo.
+`profiles.yml` reads all three values from the environment; no credentials are committed.
 
-## CI
+## Data
 
-`.github/workflows/ci.yml` runs `dbt seed`, `dbt run`, and `dbt test` against the real
-Databricks warehouse on every push, using repository secrets for the credentials, into a
-separate `job_search_dbt_ci` schema so it never collides with manual runs against the
-`job_search_dbt` schema.
+The four seed files are synthetic job-search data (companies, postings, applications, interview rounds), not a real company's data.
