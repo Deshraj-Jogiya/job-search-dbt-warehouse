@@ -2,7 +2,7 @@
     config(
         materialized='incremental',
         unique_key='date_day',
-        incremental_strategy='merge'
+        incremental_strategy=('merge' if target.type == 'databricks' else 'delete+insert')
     )
 }}
 
@@ -16,9 +16,9 @@
 with dates as (
     select date_day
     from {{ ref('dim_date') }}
-    where date_day <= current_date()
+    where date_day <= {{ today() }}
     {% if is_incremental() %}
-        and date_day > (select coalesce(max(date_day), to_date('1900-01-01')) from {{ this }})
+        and date_day > (select coalesce(max(date_day), {{ as_date('1900-01-01') }}) from {{ this }})
     {% endif %}
 ),
 

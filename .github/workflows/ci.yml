@@ -5,9 +5,36 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      databricks:
+        description: "Also build and test on the Databricks SQL warehouse (needs the three DATABRICKS_* secrets)"
+        type: boolean
+        default: false
 
 jobs:
   dbt-build-and-test:
+    # The same models, seeds and tests on a local DuckDB file, so every push is checked without a running warehouse.
+    runs-on: ubuntu-latest
+    env:
+      DBT_DUCKDB_PATH: job_search_dbt.duckdb
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements-ci.txt
+      - name: Seed the raw tables
+        run: dbt seed --profiles-dir . --target ci --full-refresh
+      - name: Build the dimensional models
+        run: dbt run --profiles-dir . --target ci
+      - name: Run the incremental snapshot again (it must add no duplicate days)
+        run: dbt run --profiles-dir . --target ci --select fct_daily_pipeline_snapshot
+      - name: Run the dbt tests (uniqueness, not-null, referential integrity, custom checks)
+        run: dbt test --profiles-dir . --target ci
+
+  databricks:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.databricks }}
     runs-on: ubuntu-latest
     env:
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
@@ -20,9 +47,6 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -r requirements.txt
-      - name: Seed the raw tables into the real Databricks warehouse
-        run: dbt seed --profiles-dir . --full-refresh
-      - name: Run the dimensional models against the real warehouse
-        run: dbt run --profiles-dir .
-      - name: Run the real dbt tests (uniqueness, not-null, referential integrity)
-        run: dbt test --profiles-dir .
+      - run: dbt seed --profiles-dir . --full-refresh
+      - run: dbt run --profiles-dir .
+      - run: dbt test --profiles-dir .

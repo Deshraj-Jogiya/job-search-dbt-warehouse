@@ -3,17 +3,18 @@
 [![ci](https://github.com/Deshraj-Jogiya/job-search-dbt-warehouse/actions/workflows/ci.yml/badge.svg)](https://github.com/Deshraj-Jogiya/job-search-dbt-warehouse/actions/workflows/ci.yml) ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 
 A dbt project that builds a dimensional model on a live Databricks SQL warehouse: staging views over seed data, then dimension and fact
-tables, an incremental daily snapshot, and data tests that run against the warehouse in CI.
+tables, an incremental daily snapshot, and data tests. The same models also build on DuckDB, which is what CI runs on every push.
 
 ## Highlights
 
 - **Dimensional model:** `dim_company`, `dim_job_posting` and `dim_date` (a 2025–2027 date spine built with `sequence()` + `explode()`),
   plus `fct_application`, `fct_interview_event` and `fct_daily_pipeline_snapshot`.
 - **Measures:** a `datediff` days-to-decision measure, and a `row_number()` window function for interview-round sequencing.
-- **Incremental model:** the daily snapshot uses `merge` on `date_day`, so later runs only recompute new days.
+- **Incremental model:** the daily snapshot uses `merge` on `date_day` (`delete+insert` on DuckDB), so later runs only recompute new days.
 - **22 dbt tests:** 20 schema tests (6 unique, 9 not-null, 4 referential-integrity, 1 accepted-values) plus two singular
   business-rule tests (a decision date never precedes the applied date; snapshot counts never go negative).
-- **Verified against the warehouse:** CI runs `dbt seed`, `dbt run` and `dbt test` on every push into a separate CI schema.
+- **Runs on two engines:** five small macros (`macros/portable.sql`) cover the SQL that Databricks and DuckDB spell differently, so CI
+  runs `dbt seed`, `dbt run`, a second incremental run and `dbt test` on DuckDB on every push; a manual run also builds on Databricks.
 
 ## Model
 
@@ -35,11 +36,20 @@ flowchart LR
 
 ## Stack
 
-dbt, Databricks SQL, SQL, dimensional modeling, GitHub Actions.
+dbt, Databricks SQL, DuckDB, SQL, dimensional modeling, GitHub Actions.
 
 ## Run it
 
-Needs a Databricks SQL warehouse and a personal access token.
+Locally on DuckDB (no account needed):
+
+```bash
+pip install -r requirements-ci.txt
+dbt seed --profiles-dir . --target ci
+dbt run  --profiles-dir . --target ci
+dbt test --profiles-dir . --target ci
+```
+
+On Databricks, with a SQL warehouse and a personal access token:
 
 ```bash
 pip install -r requirements.txt

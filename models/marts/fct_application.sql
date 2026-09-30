@@ -23,7 +23,7 @@ select
     a.decision_date,
     coalesce(ic.interview_round_count, 0) as interview_round_count,
     coalesce(ic.interview_round_count, 0) > 0 as reached_interview,
-    datediff(a.decision_date, a.applied_date) as days_to_decision,
+    {{ days_between('a.applied_date', 'a.decision_date') }} as days_to_decision,
     a.status in ('offer', 'rejected', 'withdrawn') as is_closed
 from applications a
 left join postings p on p.posting_id = a.posting_id
