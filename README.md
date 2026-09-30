@@ -64,6 +64,11 @@ dbt test --profiles-dir .
 
 `profiles.yml` reads all three values from the environment; no credentials are committed.
 
+## Findings
+
+[docs/FINDINGS.md](docs/FINDINGS.md): what a straight copy of the Databricks SQL gets wrong on DuckDB (a weekend flag wrong on
+468 of 1,095 days, negative decision times), the incremental snapshot's duplicate check, and the 22 tests on both engines.
+
 ## Data
 
 The four seed files are synthetic job-search data (companies, postings, applications, interview rounds), not a real company's data.
