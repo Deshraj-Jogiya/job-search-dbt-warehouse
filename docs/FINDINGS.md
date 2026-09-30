@@ -20,6 +20,18 @@ Databricks SQL would return on the same 1,095-day calendar (2025-01-01 to 2027-1
 | Date spine | `explode(sequence(...))` | `range(...)` | does not run |
 | Date literal, today | `to_date('...')`, `current_date()` | `cast('...' as date)`, `current_date` | does not run |
 
+Days a straight copy of `dayofweek(d) in (1, 7)` gets wrong on DuckDB, by weekday (2025-01-01 to 2027-12-31):
+
+| Weekday | Days | Wrong |
+|---|---|---|
+| Monday | 156 | 156 (flagged as weekend) |
+| Tuesday | 156 | 0 |
+| Wednesday | 157 | 0 |
+| Thursday | 157 | 0 |
+| Friday | 157 | 0 |
+| Saturday | 156 | 156 (missed) |
+| Sunday | 156 | 156 (missed) |
+
 **Decision.** Five macros in `macros/portable.sql` (`as_date`, `today`, `days_between`, `date_spine`, `day_of_week`) choose the right form
 for the target, and the models call the macros instead of the functions. On DuckDB, 2025-01-04 (a Saturday) is day 7 and 2025-01-05
 (a Sunday) is day 1, the same as on Databricks, and the 312 weekend days match.
