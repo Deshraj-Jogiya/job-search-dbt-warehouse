@@ -11,8 +11,8 @@ tables, an incremental daily snapshot, and data tests that run against the wareh
   plus `fct_application`, `fct_interview_event` and `fct_daily_pipeline_snapshot`.
 - **Measures:** a `datediff` days-to-decision measure, and a `row_number()` window function for interview-round sequencing.
 - **Incremental model:** the daily snapshot uses `merge` on `date_day`, so later runs only recompute new days.
-- **15 dbt tests:** uniqueness, not-null, referential integrity and accepted values, plus two singular business-rule tests (a decision
-  date never precedes the applied date; snapshot counts never go negative).
+- **22 dbt tests:** 20 schema tests (6 unique, 9 not-null, 4 referential-integrity, 1 accepted-values) plus two singular
+  business-rule tests (a decision date never precedes the applied date; snapshot counts never go negative).
 - **Verified against the warehouse:** CI runs `dbt seed`, `dbt run` and `dbt test` on every push into a separate CI schema.
 
 ## Model
